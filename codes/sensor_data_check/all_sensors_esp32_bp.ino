@@ -37,12 +37,12 @@
   //AD8232
   int LOplus = 41, LOminus = 40;
   #define adb_outputpin A0
-  int adb_output = analogRead(adb_outputpin);  //ad8232
+  int adb_output;  //ad8232
   
   //required variables
   int tp, ts = 0, set_value = 7000, btn_state;
   
-  #define pulse_time 60000
+  #define pulse_time 30000
   
   
   //function for beat detection. Used by pulse sensor.
@@ -85,10 +85,10 @@
     Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
   
   //Trigger the BP monitor
-  digitalWrite(bp_trigger_pin, HIGH);
-  delay(500);
-  digitalWrite(bp_trigger_pin, LOW);
-  delay(500);
+//  digitalWrite(bp_trigger_pin, HIGH);
+//  delay(500);
+//  digitalWrite(bp_trigger_pin, LOW);
+//  delay(500);
   
   //initializing pulse sensor.
   Serial.print("Initializing pulse oximeter..");  
@@ -113,7 +113,8 @@
   
   void loop() {
   
-  
+//  Serial.print(bp_checked);
+   
   if(ts<21){
     
   //Check pulse & spo2
@@ -123,9 +124,10 @@
   //      Serial.println("pulse state");
     }
   if(bp_checked == 0){
+    while (bp_checked == 0)
+    {
   
        ch = mygetchar(); //loop till character received
-  //Serial.println(ch);
   
    if(ch== 0x0A) // if received character is , 0x0A, 10 then process buffer
    {
@@ -136,7 +138,6 @@
        sys = ((sbuffer[1]-'0')*100) + ((sbuffer[2]-'0')*10) +(sbuffer[3]-'0');
        dia = ((sbuffer[6]-'0')*100) + ((sbuffer[7]-'0')*10) +(sbuffer[8]-'0');
        pulse = ((sbuffer[11]-'0')*100) + ((sbuffer[12]-'0')*10) +(sbuffer[13]-'0');
-       Serial.println("Data stored in sys, dia, pulse...");
   
   
        // example: send demo output to Serial1 monitor on "Serial1"
@@ -150,11 +151,9 @@
    } else { 
     //store Serial1 data to buffer
        sbuffer[pos] = ch;
-       Serial.println("waiting...");
-  //     Serial.println(ch);
        pos++;
    }
-   
+  }
   }
       
       float temp = max30205.readTemperature();     //body temp
@@ -196,6 +195,7 @@
         }
         else{
           Serial.print("ECG_Values: ");
+          adb_output = analogRead(A0);
           Serial.println(adb_output);
         }
         delay(21);
