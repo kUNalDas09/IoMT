@@ -11,20 +11,24 @@
     char content[] = "IOMT";
     Server.send(200, "text/plain", content);
   }
+  
   #define RXD2 16
   #define TXD2 17
-  
+
+  //sys, dia and pulse
   char sbuffer[30], ch;
   unsigned char pos;
   unsigned char sys, dia, pulse;
   #define bp_trigger_pin 5
   int bp_checked = 0;
 
+  //SpO2
   #include "MAX30100_PulseOximeter.h"
-  #define REPORTING_PERIOD_MS     7000
+  #define REPORTING_PERIOD_MS 7000
   PulseOximeter pox;
   uint32_t tsLastReport = 0;
-  
+
+  //Body Temperature  
   #include "ClosedCube_MAX30205.h"
   ClosedCube_MAX30205 max30205;
   
@@ -44,7 +48,7 @@
   #define adb_outputpin A0
   
   //required variables
-  int tp, ts = 0, set_value = 7000, btn_state, ecg_last_report = 0, ecg_set_time = 60000;
+  int ts = 0,adb_output;
   
   #define pulse_time 14000
 
@@ -54,19 +58,32 @@
   //credentials
   const char* mqtt_username = "iomt";
   const char* mqtt_pswd = "iomt2021";
+  //mac_address
+  String mac_id = WiFi.macAddress();
   //topics
-  const char* bodyTemp_topic = "iomt/patient/body_temp";
-  const char* gsr_topic = "iomt/patient/gsrReader";
-  const char* roomTemp_topic = "iomt/patient/room_temp";  
-  const char* humidity_topic = "iomt/patient/humidity_";
-  const char* pulse_topic = "iomt/patient/pulsedata";
-  const char* spo2_topic = "iomt/patient/spo2_info";
-  const char* ecg_topic = "iomt/patient/ecg_infor";
-  const char* sys_topic = "iomt/patient/systolic_";
-  const char* dia_topic = "iomt/patient/diastolic";
+  String iomt_topic = "iomt/";
+  String body_temp = "/body_temp";
+  String gsrReader = "/gsrReader";
+  String room_temp= "/room_temp";  
+  String humidity_ = "/humidity_";
+  String pulsedata = "/pulsedata";
+  String spo2_info = "/spo2_info";
+  String ecg_infor = "/ecg_infor";
+  String systolic_ = "/systolic_";
+  String diastolic = "/diastolic";
   
+  String bodyTemp_topic = iomt_topic+mac_id+body_temp;
+  String gsr_topic = iomt_topic+mac_id+gsrReader;
+  String roomTemp_topic = iomt_topic+mac_id+room_temp;  
+  String humidity_topic = iomt_topic+mac_id+humidity_;
+  String pulse_topic = iomt_topic+mac_id+pulsedata;
+  String spo2_topic = iomt_topic+mac_id+spo2_info;
+  String ecg_topic = iomt_topic+mac_id+ecg_infor;
+  String sys_topic = iomt_topic+mac_id+systolic_;
+  String dia_topic = iomt_topic+mac_id+diastolic;
+    
   //clientID
-  const char* ClientID = "client_ID";
+  const char* ClientID = "iomt_2022";
   
   WiFiClient wifiClient;
   PubSubClient client(controller_ip,1883,wifiClient);
@@ -80,7 +97,6 @@
     
   }
   
-  //function for beat detection. Used by pulse sensor.
   void onBeatDetected()
   {
 
@@ -89,7 +105,7 @@
       Serial.println("Beat!");
       if (millis() - tsLastReport > pulse_time) {
         
-        if(client.publish(spo2_topic, String(spo2).c_str()))
+        if(client.publish(spo2_topic.c_str(), String(spo2).c_str()))
         {
           Serial.print("spO2 sent");
         }
@@ -98,7 +114,7 @@
           Serial.println("spO2 value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(spo2_topic, String(spo2).c_str());
+          client.publish(spo2_topic.c_str(), String(spo2).c_str());
         } 
    
           tsLastReport = millis();
@@ -118,18 +134,17 @@
   void setup() {
        
   pinMode(bp_trigger_pin, OUTPUT);
-  
   pinMode(LOplus, INPUT); 
   pinMode(LOminus, INPUT);
   
     Serial.begin(9600);
     Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+    
     Serial.println("Not Connected to any network !!");
     Server.on("/", rootPage);
     if (Portal.begin()) {
       Serial.println("WiFi connected: " + WiFi.localIP().toString());
     }
-
     connect_MQTT();
 
   digitalWrite(bp_trigger_pin, HIGH);
@@ -171,45 +186,45 @@
     }
      
   if(bp_checked == 0){
+    while (bp_checked == 0)
+    {
   
        ch = mygetchar();
          
    if(ch== 0x0A) 
    {
-       pos = 0; // buffer position reset for next reading
-  
-       // extract data from Serial1 buffer to 8 bit integer value
-       // convert data from ASCII to decimal
+       pos = 0;   
+       
        sys = ((sbuffer[1]-'0')*100) + ((sbuffer[2]-'0')*10) +(sbuffer[3]-'0');
        dia = ((sbuffer[6]-'0')*100) + ((sbuffer[7]-'0')*10) +(sbuffer[8]-'0');
        pulse = ((sbuffer[11]-'0')*100) + ((sbuffer[12]-'0')*10) +(sbuffer[13]-'0');
       
 
-       if(client.publish(sys_topic, String(sys).c_str()))
+       if(client.publish(sys_topic.c_str(), String(sys).c_str()))
         {
-          Serial.print("sent");
+          Serial.print("Sys_sent");
         }
         else
         {
           Serial.println("Sys value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(sys_topic, String(sys).c_str());
+          client.publish(sys_topic.c_str(), String(sys).c_str());
         }
 
-        if(client.publish(dia_topic, String(dia).c_str()))
+        if(client.publish(dia_topic.c_str(), String(dia).c_str()))
         {
-          Serial.print("sent");
+          Serial.print("Dia_sent");
         }
         else
         {
           Serial.println("Dia value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(dia_topic, String(dia).c_str());
+          client.publish(dia_topic.c_str(), String(dia).c_str());
         }
 
-        if(client.publish(pulse_topic, String(pulse).c_str()))
+        if(client.publish(pulse_topic.c_str(), String(pulse).c_str()))
         {
           Serial.print("Pulse sent");
         }
@@ -218,7 +233,7 @@
           Serial.println("Pulse value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(pulse_topic, String(pulse).c_str());
+          client.publish(pulse_topic.c_str(), String(pulse).c_str());
         } 
         
        bp_checked = 1;
@@ -229,7 +244,7 @@
        Serial.println("waiting...");
        pos++;
    }
-   
+  }   
   }
       
       float temp = max30205.readTemperature();     //body temp
@@ -245,7 +260,7 @@
         }      
       gsr_average = sum/100;
 
-        if(client.publish(bodyTemp_topic, String(temp).c_str()))
+        if(client.publish(bodyTemp_topic.c_str(), String(temp).c_str()))
         {
           Serial.print("sent");
         }
@@ -254,10 +269,10 @@
           Serial.println("Bodytemp value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(bodyTemp_topic, String(temp).c_str());
+          client.publish(bodyTemp_topic.c_str(), String(temp).c_str());
         }
         
-       if(client.publish(gsr_topic, String(gsr_average).c_str()))
+       if(client.publish(gsr_topic.c_str(), String(gsr_average).c_str()))
         {
           Serial.print("GSR sent");
         }
@@ -266,10 +281,10 @@
           Serial.println("GSR value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(gsr_topic, String(gsr_average).c_str());
+          client.publish(gsr_topic.c_str(), String(gsr_average).c_str());
         }
 
-        if(client.publish(humidity_topic, String(humidity).c_str()))
+        if(client.publish(humidity_topic.c_str(), String(humidity).c_str()))
         {
           Serial.print("Humidity sent");
         }
@@ -278,10 +293,10 @@
           Serial.println("Humidity value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(humidity_topic, String(humidity).c_str());
+          client.publish(humidity_topic.c_str(), String(humidity).c_str());
         } 
  
-        if(client.publish(roomTemp_topic, String(roomTemp).c_str()))
+        if(client.publish(roomTemp_topic.c_str(), String(roomTemp).c_str()))
         {
           Serial.print("Room Temp sent");
         }
@@ -290,7 +305,7 @@
           Serial.println("Room Temp value failed to sent. Trying to reconnect.");
           client.connect(ClientID,mqtt_username,mqtt_pswd);
           delay(50);
-          client.publish(roomTemp_topic, String(roomTemp).c_str());
+          client.publish(roomTemp_topic.c_str(), String(roomTemp).c_str());
         }   
  
   
@@ -300,8 +315,22 @@
           if((digitalRead(LOminus) == 1)||(digitalRead(LOplus) == 1)){
             Serial.println('!');
           }
+          
           else{
-             Serial.println(analogRead(adb_outputpin));
+            
+             adb_output = analogRead(adb_outputpin);
+             
+             if(client.publish(ecg_topic.c_str(), String(adb_output).c_str()))
+             {
+                Serial.print("ECG sent");
+             }
+             else
+             {
+                Serial.println("ECG value failed to sent. Trying to reconnect.");
+                client.connect(ClientID,mqtt_username,mqtt_pswd);
+                delay(50);
+                client.publish(ecg_topic.c_str(), String(adb_output).c_str());
+             }
           }
 
    delay(21);

@@ -112,9 +112,7 @@
   }
   
   void loop() {
-  
-//  Serial.print(bp_checked);
-   
+    
   if(ts<21){
     
   //Check pulse & spo2
