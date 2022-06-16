@@ -50,37 +50,26 @@
   //required variables
   int ts = 0,adb_output;
   
-  #define pulse_time 14000
+  #define pulse_time 30000
 
   //MQTT_PART
   //server
-  const IPAddress controller_ip(192, 168, 1, 122);
+  const IPAddress controller_ip(157, 245, 105, 205);
   //credentials
   const char* mqtt_username = "iomt";
   const char* mqtt_pswd = "iomt2021";
   //mac_address
   String mac_id = WiFi.macAddress();
   //topics
-  String iomt_topic = "iomt/";
-  String body_temp = "/body_temp";
-  String gsrReader = "/gsrReader";
-  String room_temp= "/room_temp";  
-  String humidity_ = "/humidity_";
-  String pulsedata = "/pulsedata";
-  String spo2_info = "/spo2_info";
-  String ecg_infor = "/ecg_infor";
-  String systolic_ = "/systolic_";
-  String diastolic = "/diastolic";
-  
-  String bodyTemp_topic = iomt_topic+mac_id+body_temp;
-  String gsr_topic = iomt_topic+mac_id+gsrReader;
-  String roomTemp_topic = iomt_topic+mac_id+room_temp;  
-  String humidity_topic = iomt_topic+mac_id+humidity_;
-  String pulse_topic = iomt_topic+mac_id+pulsedata;
-  String spo2_topic = iomt_topic+mac_id+spo2_info;
-  String ecg_topic = iomt_topic+mac_id+ecg_infor;
-  String sys_topic = iomt_topic+mac_id+systolic_;
-  String dia_topic = iomt_topic+mac_id+diastolic;
+  String bodyTemp_topic = "iomt/"+mac_id+"/body_temp";
+  String gsr_topic = "iomt/"+mac_id+"/gsrReader";
+  String roomTemp_topic = "iomt/"+mac_id+"/room_temp";  
+  String humidity_topic = "iomt/"+mac_id+"/humidity_";
+  String pulse_topic = "iomt/"+mac_id+"/pulseData";
+  String spo2_topic = "iomt/"+mac_id+"/spo2_info";
+  String ecg_topic = "iomt/"+mac_id+"/ecg_info";
+  String sys_topic = "iomt/"+mac_id+"/systolic_";
+  String dia_topic = "iomt/"+mac_id+"/diastolic";
     
   //clientID
   const char* ClientID = "iomt_2022";
@@ -103,11 +92,11 @@
       int spo2 =  pox.getSpO2();
       
       Serial.println("Beat!");
-      if (millis() - tsLastReport > pulse_time) {
+      if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
         
         if(client.publish(spo2_topic.c_str(), String(spo2).c_str()))
         {
-          Serial.print("spO2 sent");
+          Serial.println("spO2 sent");
         }
         else
         {
@@ -142,9 +131,9 @@
     
     Serial.println("Not Connected to any network !!");
     Server.on("/", rootPage);
-    if (Portal.begin()) {
+    if (Portal.begin()) 
       Serial.println("WiFi connected: " + WiFi.localIP().toString());
-    }
+    
     connect_MQTT();
 
   digitalWrite(bp_trigger_pin, HIGH);
@@ -262,7 +251,7 @@
 
         if(client.publish(bodyTemp_topic.c_str(), String(temp).c_str()))
         {
-          Serial.print("sent");
+          Serial.println("Bodytemp_sent");
         }
         else
         {
@@ -274,7 +263,7 @@
         
        if(client.publish(gsr_topic.c_str(), String(gsr_average).c_str()))
         {
-          Serial.print("GSR sent");
+          Serial.println("GSR sent");
         }
         else
         {
@@ -286,7 +275,7 @@
 
         if(client.publish(humidity_topic.c_str(), String(humidity).c_str()))
         {
-          Serial.print("Humidity sent");
+          Serial.println("Humidity sent");
         }
         else
         {
@@ -298,7 +287,7 @@
  
         if(client.publish(roomTemp_topic.c_str(), String(roomTemp).c_str()))
         {
-          Serial.print("Room Temp sent");
+          Serial.println("Room Temp sent");
         }
         else
         {
@@ -322,7 +311,7 @@
              
              if(client.publish(ecg_topic.c_str(), String(adb_output).c_str()))
              {
-                Serial.print("ECG sent");
+                Serial.println("ECG sent");
              }
              else
              {
