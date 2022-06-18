@@ -12,17 +12,11 @@ Remote patient monitoring technologies are becoming more significant and a futur
 4. Open Virtual Switch
 5. Ryu-SDN Controller
 
-### Overall Architecture
-<img src="images/Layered%20Architecture.png" width="500" height="250"> <img src="images/medical%20centre%20scenerio.png" width="500" height="250">
-
 ### The Hardware Architecture:
 The sensor layer consists of ESP32 and the individual sensors integrated on a pcb veroboard. At first, the ESP32 emits its hotspot which can be detected on a mobile or a desktop through which it is connected to the network from the raspberry pi. We use the autoconnect library for the dynamic setup of joining a WLAN with the appropriate SSID and PSK. It’s an Arduino library that includes the WebServer class for the ESP32 which helps to connect to the access point via the web interface at runtime, without the need for a hard-coded SSID and password. The data is transferred to the ESP32 via UART, I2C communication protocols, etc. and using MQTT protocol the sensor data is sent from ESP32 to the broker at the fog controller. The gathered data is then utilised to create a machine learning model that can forecast a person's medical issues. 
 
-### Veroboard design: 
-<img src="images/veroboard-design-front.png" width="500" height="250"> <img src="images/veroboard-design-back.png" width="400" height="250">
-
 ### Work under progress:
-<img src="images/pcb%20design.jpeg" width="500" height="450"> <img src="images/printed%20board.jpeg" width="500" height="450">
+<img src="images/printed%20board.jpeg" width="500" height="450">
 
 ### Glove Working Model:
 <img src="images/glove-model.png" width="350" height="400">
